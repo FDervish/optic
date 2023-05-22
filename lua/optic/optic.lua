@@ -547,8 +547,8 @@ function kill_counter()
         if(object ~= 0 and object ~= 0xFFFFFFFF) then
 			local object_type = read_word(object + 0xB4)
             if(object_type == 0) then
-                health = read_bit(object + 0x106, 2)
-                if health == 1 and table_contains(casualties, object) == false then
+                isDead = read_bit(object + 0x106, 2) -- true when object is dead
+                if isDead == 1 and table_contains(casualties, object) == false then
                     killerId = read_word(object + 0x438) -- the most recent object ID to do damage to this object
                     killerName = GetName(read_dword(first_object + killerId * 0xC + 0x8)) -- the name of the object that did the damage
                     if killerName == "characters\\cyborg\\cyborg" then -- hardcoded for the moment, will eventually update it to be more dynamic
