@@ -526,7 +526,88 @@ function OnMapLoad()
     playerData = deepcopy(defaultPlayerData)
 end
 
+game_state_address = 0x400002E8
+
+kills = 0
+killStreak = 0
+killTime = 0
+casualties = {}
+
+function OnTick()
+    game_time = read_word(game_state_address + 12)
+    kill_counter()
+end
+
+function kill_counter()
+	local object_table = read_dword(read_dword(0x401194))
+    local object_count = read_word(object_table + 0x2E)
+    local first_object = read_dword(object_table + 0x34)
+    for i=0,object_count-1 do
+        local object = read_dword(first_object + i * 0xC + 0x8)
+        if(object ~= 0 and object ~= 0xFFFFFFFF) then
+			local object_type = read_word(object + 0xB4)
+            if(object_type == 0) then
+                health = read_bit(object + 0x106, 2)
+                if health == 1 and table_contains(casualties, object) == false then
+                    killerId = read_word(object + 0x438) -- the most recent object ID to do damage to this object
+                    killerName = GetName(read_dword(first_object + killerId * 0xC + 0x8)) -- the name of the object that did the damage
+                    if killerName == "characters\\cyborg\\cyborg" then -- hardcoded for the moment, will eventually update it to be more dynamic
+                        execute_script("cls")
+                        if game_time - killTime < 150 then
+                            killStreak = killStreak + 1
+                            dprint("Kill Streak: "..killStreak)
+                            if (killStreak == 2) then
+                                medal(sprites.doubleKill)
+                            elseif (killStreak == 3) then
+                                medal(sprites.tripleKill)
+                            elseif (killStreak == 4) then
+                                medal(sprites.overkill)
+                            elseif (killStreak == 5) then
+                                medal(sprites.killtacular)
+                            elseif (killStreak == 6) then
+                                medal(sprites.killtrocity)
+                            elseif (killStreak == 7) then
+                                medal(sprites.killimanjaro)
+                            elseif (killStreak == 8) then
+                                medal(sprites.killtastrophe)
+                            elseif (killStreak == 9) then
+                                medal(sprites.killpocalypse)
+                            elseif (killStreak == 10) then
+                                medal(sprites.killionaire)
+                            end
+                        else
+                            killStreak = 1
+                        end
+                        table.insert(casualties, object)
+                        kills = kills + 1
+                        dprint("Kills: "..kills)
+                        killTime = game_time
+                    end
+                end
+			end
+		end
+	end
+end
+
+function GetName(object)
+    if object ~= nil then
+        local tag_addr = get_tag(read_dword(object))
+        local tag_path_addr = read_dword(tag_addr + 0x10)
+        return read_string(tag_path_addr)
+    end
+end
+
+function table_contains(table, element)
+    for _, value in pairs(table) do
+      if value == element then
+        return true
+      end
+    end
+    return false
+end
+
 set_callback("command", "OnCommand")
 set_callback("map load", "OnMapLoad")
+set_callback("tick", "OnTick")
 
 OnScriptLoad()
