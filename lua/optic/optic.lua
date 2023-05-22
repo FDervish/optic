@@ -532,10 +532,23 @@ kills = 0
 killStreak = 0
 killTime = 0
 casualties = {}
+targets = {"characters\\jackal\\jackal",
+          "characters\\jackal\\jackal major",
+          "characters\\elite\\elite",
+          "characters\\elite\\elite special",
+          "characters\\grunt\\grunt",
+          "characters\\hunter\\hunter",
+          "characters\\sentinel\\sentinel",
+          "characters\\marine\\marine",
+          "characters\\marine_armored\\marine_armored",
+          "characters\\cyborg\\cyborg_unarmed",
+          }
 
 function OnTick()
     game_time = read_word(game_state_address + 12)
-    kill_counter()
+    if blam.isGameSinglePlayer() then
+        kill_counter()
+    end
 end
 
 function kill_counter()
@@ -548,40 +561,44 @@ function kill_counter()
 			local object_type = read_word(object + 0xB4)
             if(object_type == 0) then
                 isDead = read_bit(object + 0x106, 2) -- true when object is dead
-                if isDead == 1 and table_contains(casualties, object) == false then
-                    killerId = read_word(object + 0x438) -- the most recent object ID to do damage to this object
-                    killerName = GetName(read_dword(first_object + killerId * 0xC + 0x8)) -- the name of the object that did the damage
-                    if killerName == "characters\\cyborg\\cyborg" then -- hardcoded for the moment, will eventually update it to be more dynamic
-                        execute_script("cls")
-                        if game_time - killTime < 150 then
-                            killStreak = killStreak + 1
-                            dprint("Kill Streak: "..killStreak)
-                            if (killStreak == 2) then
-                                medal(sprites.doubleKill)
-                            elseif (killStreak == 3) then
-                                medal(sprites.tripleKill)
-                            elseif (killStreak == 4) then
-                                medal(sprites.overkill)
-                            elseif (killStreak == 5) then
-                                medal(sprites.killtacular)
-                            elseif (killStreak == 6) then
-                                medal(sprites.killtrocity)
-                            elseif (killStreak == 7) then
-                                medal(sprites.killimanjaro)
-                            elseif (killStreak == 8) then
-                                medal(sprites.killtastrophe)
-                            elseif (killStreak == 9) then
-                                medal(sprites.killpocalypse)
-                            elseif (killStreak == 10) then
-                                medal(sprites.killionaire)
+                health = read_float(object + 0xE0)
+                if (isDead == 1 or health <= 0) and table_contains(targets, GetName(object)) and table_contains(casualties, object) == false then
+                    killerId = read_word(object + 0x40C) -- the most recent object ID to do damage to this object
+                    if not blam.isNull(killerId) then
+                        killerName = GetName(read_dword(first_object + killerId * 0xC + 0x8)) -- the name of the object that did the damage
+                        team = read_dword(object + 0xB8) -- object team : 4294901760 = none, 4294901761 = player, 4294901762 = human, 4294901763 = covenant, 4294901764 = flood, 4294901765 = sentinel,  4294901766 = unused6, 4294901767 = unused7, 4294901768 = unused8, 4294901769 = unused9 ("unused" teams are still valid)
+                        if not blam.isNull(killerName) and killerName == "characters\\cyborg\\cyborg" and team ~= 4294901762 and team  ~= 4294901761 then -- hardcoded for the moment, will eventually update it to be more dynamic
+                            execute_script("cls")
+                            if game_time - killTime < 150 then
+                                killStreak = killStreak + 1
+                                dprint("Kill Streak: "..killStreak)
+                                if (killStreak == 2) then
+                                    medal(sprites.doubleKill)
+                                elseif (killStreak == 3) then
+                                    medal(sprites.tripleKill)
+                                elseif (killStreak == 4) then
+                                    medal(sprites.overkill)
+                                elseif (killStreak == 5) then
+                                    medal(sprites.killtacular)
+                                elseif (killStreak == 6) then
+                                    medal(sprites.killtrocity)
+                                elseif (killStreak == 7) then
+                                    medal(sprites.killimanjaro)
+                                elseif (killStreak == 8) then
+                                    medal(sprites.killtastrophe)
+                                elseif (killStreak == 9) then
+                                    medal(sprites.killpocalypse)
+                                elseif (killStreak == 10) then
+                                    medal(sprites.killionaire)
+                                end
+                            else
+                                killStreak = 1
                             end
-                        else
-                            killStreak = 1
+                            table.insert(casualties, object)
+                            kills = kills + 1
+                            dprint("Kills: "..kills)
+                            killTime = game_time
                         end
-                        table.insert(casualties, object)
-                        kills = kills + 1
-                        dprint("Kills: "..kills)
-                        killTime = game_time
                     end
                 end
 			end
