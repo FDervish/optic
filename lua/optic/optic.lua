@@ -611,9 +611,9 @@ function kill_counter()
                                 execute_script("cls")
                                 if read_word(fp_anim_address + 30) == melee_anim_id and read_word(fp_anim_address + 32) < 10 then
                                     if math.abs(read_float(object + 0x74) - read_float(get_dynamic_player() + 0x74)) < math.abs(0.1) then
-                                        hud_message("backsmack")
+                                        medal(sprites.back_smack)
                                     else
-                                        hud_message("melee kill")
+                                        medal(sprites.melee)
                                     end
                                 end
                                 if game_time - killTime < 150 then
@@ -648,7 +648,7 @@ function kill_counter()
                                     end
                                 end
                                 if targets_instanced[index][4] ~= nil and killTimer == targets_instanced[index][4] then
-                                    medal(sprites.snapshot)
+                                    medal(sprites.snipe)
                                 end
                                 table.insert(casualties, object)
                                 kills = kills + 1
