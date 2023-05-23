@@ -517,6 +517,7 @@ function OnCommand(command)
 end
 
 function OnMapLoad()
+    melee_anim_parser()
     loadOpticConfiguration()
     if (not medalsLoaded) then
         console_out("Error, medals were not loaded properly!")
@@ -527,11 +528,13 @@ function OnMapLoad()
 end
 
 game_state_address = 0x400002E8
+fp_anim_address = 0x40000EB8
 
 kills = 0
 killStreak = 0
 killTime = 0
 casualties = {}
+fp = {}
 here = false
 
 targets = {
@@ -551,6 +554,7 @@ targets_instanced = {}
 function OnTick()
     game_time = read_word(game_state_address + 12)
     if blam.isGameSinglePlayer() then
+        melee_anim_split()
         kill_counter()
     end
 end
@@ -605,6 +609,13 @@ function kill_counter()
                             team = read_dword(object + 0xB8) -- object team : 4294901760 = none, 4294901761 = player, 4294901762 = human, 4294901763 = covenant, 4294901764 = flood, 4294901765 = sentinel,  4294901766 = unused6, 4294901767 = unused7, 4294901768 = unused8, 4294901769 = unused9 ("unused" teams are still valid)
                             if not blam.isNull(killerName) and killerName == "characters\\cyborg\\cyborg" and team ~= 4294901762 and team  ~= 4294901761 then -- hardcoded for the moment, will eventually update it to be more dynamic
                                 execute_script("cls")
+                                if read_word(fp_anim_address + 30) == melee_anim_id and read_word(fp_anim_address + 32) < 10 then
+                                    if math.abs(read_float(object + 0x74) - read_float(get_dynamic_player() + 0x74)) < math.abs(0.1) then
+                                        hud_message("backsmack")
+                                    else
+                                        hud_message("melee kill")
+                                    end
+                                end
                                 if game_time - killTime < 150 then
                                     killStreak = killStreak + 1
                                     dprint("Kill Streak: "..killStreak)
@@ -669,6 +680,56 @@ function table_contains(table, element)
     end
     return false
 end
+
+function split(source, sep)
+    local result, i = {}, 1
+    while true do
+        local a, b = source:find(sep)
+        if not a then break end
+        local candidat = source:sub(1, a - 1)
+        if candidat ~= "" then 
+            result[i] = candidat
+        end i=i+1
+        source = source:sub(b + 1)
+    end
+    if source ~= "" then 
+        result[i] = source
+    end
+    return result
+end
+
+function melee_anim_parser()
+    for tagIndex = 0, blam.tagDataHeader.count - 1 do
+        local tempTag = blam.getTag(tagIndex)
+        if (tempTag and tempTag.class == blam.tagClasses.modelAnimations) then
+            if (tempTag.path and tempTag.path:find("fp")) then
+                local animationsTag = blam.modelAnimations(tagIndex)
+                if (blam.modelAnimations(tagIndex)) then
+                    for animationIndex, animation in pairs(animationsTag.animationList) do
+                        if animationsTag.fpAnimationList[14] ~= nil then
+                            table.insert(fp, {tempTag.path, animationsTag.fpAnimationList[14]})
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function melee_anim_split()
+    for k, v in pairs(fp) do
+        name = GetName(get_object(read_dword(fp_anim_address + 16)))
+        name = split(name, "\\")
+        name = name[#name]
+        if v[1]:find(name) then
+            melee_anim_id = v[2]
+            break
+        end
+    end
+end
+
+melee_anim_parser()
 
 set_callback("command", "OnCommand")
 set_callback("map load", "OnMapLoad")
