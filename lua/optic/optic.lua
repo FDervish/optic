@@ -588,11 +588,26 @@ function kill_counter()
                             else
                                 region_health = read_byte(object + 0x178 + head_region_offset)
                             end
-                            table.insert(targets_instanced, {GetName(object),object,region_health,0})
+                            table.insert(targets_instanced, {GetName(object),object,region_health,0,0,"",0})
                         else
                             if targets_instanced[index][3] == nil then
                                 targets_instanced[index][4] = nil
                             else
+                                if targets[k][1] == GetName(object) and table_contains(casualties, object) == false then
+                                    last_damager = read_dword(first_object + read_word(object + 0x40C) * 0xC + 0x8)
+                                    if last_damager ~= 0 then
+                                        last_damager_name = GetName(last_damager)
+                                        targets_instanced[index][7] = game_time
+                                        targets_instanced[index][6] = last_damager_name
+                                    else
+                                        if last_damager_name == "characters\\cyborg\\cyborg" then
+                                            targets_instanced[index][6] = last_damager_name
+                                        else
+                                            targets_instanced[index][6] = nil
+                                        end 
+                                    end
+                                end
+                                targets_instanced[index][5] = read_char(object + 0x501)
                                 region_health_last_tick = targets_instanced[index][3]
                                 targets_instanced[index][3] = read_byte(object + 0x178 + head_region_offset)
                                 if targets_instanced[index][3] ~= region_health_last_tick then
@@ -604,16 +619,45 @@ function kill_counter()
                     if (isDead == 1 or health <= 0) and targets[k][1] == GetName(object) and table_contains(casualties, object) == false then
                         killTimer = game_time
                         killerId = read_word(object + 0x40C) -- the most recent object ID to do damage to this object
+                        if targets_instanced[index][5] > 30 and targets_instanced[index][6] == "characters\\cyborg\\cyborg" and ((game_time) - (targets_instanced[index][7])) > 0 then
+                            medal(sprites.mind_the_gap)
+                            last_damager_name = nil
+                        end
+                        table.insert(casualties, object)
                         if not blam.isNull(killerId) then
                             killerName = GetName(read_dword(first_object + killerId * 0xC + 0x8)) -- the name of the object that did the damage
                             team = read_dword(object + 0xB8) -- object team : 4294901760 = none, 4294901761 = player, 4294901762 = human, 4294901763 = covenant, 4294901764 = flood, 4294901765 = sentinel,  4294901766 = unused6, 4294901767 = unused7, 4294901768 = unused8, 4294901769 = unused9 ("unused" teams are still valid)
                             if not blam.isNull(killerName) and killerName == "characters\\cyborg\\cyborg" and team ~= 4294901762 and team  ~= 4294901761 then -- hardcoded for the moment, will eventually update it to be more dynamic
                                 execute_script("cls")
+                                if blam.biped(get_dynamic_player()).vehicleObjectId ~= 4294967295 then
+                                    vehicle_id = blam.biped(get_dynamic_player()).vehicleObjectId
+                                    vehicle_obj = blam.object(get_object(vehicle_id))
+                                    vehicle_x = vehicle_obj.x
+                                    vehicle_y = vehicle_obj.y
+                                    vehicle_z = vehicle_obj.z
+                                    obj_x = blam.object(object).x
+                                    obj_y = blam.object(object).y
+                                    obj_z = blam.object(object).z
+                                    distance = math.sqrt((vehicle_x - obj_x)^2 + (vehicle_y - obj_y)^2 + (vehicle_z - obj_z)^2)
+                                end
+                                if blam.biped(get_dynamic_player()).vehicleSeatIndex == 0 and distance < 1.5 then
+                                    medal(sprites.splatter)
+                                end
                                 if read_word(fp_anim_address + 30) == melee_anim_id and read_word(fp_anim_address + 32) < 10 then
                                     if math.abs(read_float(object + 0x74) - read_float(get_dynamic_player() + 0x74)) < math.abs(0.1) then
                                         medal(sprites.back_smack)
                                     else
                                         medal(sprites.melee)
+                                    end
+                                end
+                                if time ~= nil and time > 0.93 then
+                                    medal(sprites.cluster_luck)
+                                    time = 0
+                                    if distance > 5 then
+                                        medal(sprites.hail_mary)
+                                    end
+                                    if attached == targets[k][1] then
+                                        medal(sprites.stick)
                                     end
                                 end
                                 if game_time - killTime < 150 then
@@ -658,6 +702,12 @@ function kill_counter()
                         end
                         table.remove(targets_instanced, index)
                     end
+                end
+            elseif(object_type == 5) then
+                if GetName(object) == "weapons\\plasma grenade\\plasma grenade" or GetName(object) == "weapons\\frag grenade\\frag grenade" then
+                    time = read_float(object + 0x240)
+                    distance = read_float(object + 0x250)
+                    attached = GetName(get_object(read_dword(object + 0x11C)))
                 end
 			end
 		end

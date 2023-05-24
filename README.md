@@ -31,9 +31,8 @@ mercury install optic
 Right now the project is aiming to provide an acceptable quantity of medals from Halo 4 as an
 standard for medals available to recreate on Halo Custom Edition.
 
+## General
 - Kill
-- Rocket Kill
-- Needler Kill
 - Double Kill
 - Triple Kill
 - Overkill
@@ -43,6 +42,10 @@ standard for medals available to recreate on Halo Custom Edition.
 - Killtastrophe
 - Killpocalypse
 - Killionaire
+
+## Multilayer
+- Rocket Kill
+- Needler Kill
 - Killing Spree
 - Killing Frenzy
 - Running Riot
@@ -59,6 +62,16 @@ standard for medals available to recreate on Halo Custom Edition.
 - Flag Captured
 - Flag Runner
 - Flag Champion
+
+## Singleplayer
+- Melee Kill
+- Headshot
+- Back Smack
+- Splatter
+- Cluster Luck
+- Hail Mary
+- Mind the Gap
+- Stick
 
 Also this project provides simple hitmaker support.
 

@@ -24,11 +24,7 @@ local function sprites(size)
         untouchable = {name = "untouchable", width = size, height = size, alias = "nightmare"},
         invincible = {name = "invincible", width = size, height = size, alias = "boogeyman"},
         inconceivable = {name = "inconceivable", width = size, height = size, alias = "grim_reaper"},
-        unfriggenbelievable = {
-            name = "unfriggenbelievable",
-            width = size,
-            height = size,
-            alias = "demon"
+        unfriggenbelievable = {name = "unfriggenbelievable", width = size, height = size, alias = "demon"
         },
         comebackKill = {name = "comeback_kill", width = size, height = size},
 
@@ -62,20 +58,8 @@ local function sprites(size)
         flagRunner = {name = "flag_runner", width = size, height = size},
         flagChampion = {name = "flag_champion", width = size, height = size},
 
-        hitmarkerHit = {
-            name = "hitmarker",
-            width = size,
-            height = size,
-            renderGroup = "crosshair",
-            noHudMessage = true
-        },
-        hitmarkerKill = {
-            name = "hitmarker_kill",
-            width = size * 1.25,
-            height = size * 1.25,
-            renderGroup = "crosshair",
-            noHudMessage = true
-        }
+        hitmarkerHit = {name = "hitmarker", width = size, height = size, renderGroup = "crosshair", noHudMessage = true},
+        hitmarkerKill = {name = "hitmarker_kill", width = size * 1.25, height = size * 1.25, renderGroup = "crosshair", noHudMessage = true}
     }
 end
 
